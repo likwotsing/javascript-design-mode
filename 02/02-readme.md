@@ -51,3 +51,63 @@ getId('div1');
 
 ### call和apply的用途
 1. 改变this指向
+2. Function.prototype.bind
+> 简化版本：
+```
+Function.prototype.bind = function(context) {
+  var self = this;
+  return function() {
+    return self.apply(context, arguments);
+  }
+}
+
+var obj = {
+  name: 'andy'
+}
+
+var func = function() {
+  alert(this.name) // andy
+}.bind(obj)
+
+func()
+```
+> 预填参数：
+```
+Function.prototype.bind = function() {
+  var self = this,
+      context = [].shift.call(arguments), // 需要绑定this的上下文
+      args = [].slice.call(arguments);  // 剩余的参数转成数组
+  return function() {
+    return self.apply(context, [].concat.call(args, [].slice.call(arguments)));
+    // 组合两次分别传入的参数，作为新函数的参数
+  }
+}
+
+var obj = {
+  name: 'andy'
+}
+
+var func = function(a, b, c, d) {
+  alert(this.name)  // andy
+  alert([a, b, c, d]) // [1, 2, 3, 4]
+}.bind(obj, 1, 2)
+
+func(3, 4)
+```
+3. 借用其他对象的方法
+> 函数的参数列表arguments是一个类数组对象，虽然有*下标*，但并非真正的数组，所以不能像数组一样，进行排序操作等，需要借用Array.prototype对象上的方法。
+```
+(function() {
+  Array.prototype.push.call(arguments, 3)
+  console.log(arguments) // [1, 2, 3]
+})(1, 2)
+```
+> Array.prototype.push是一个属性复制的过程，可以把**任意**对象传入Array.prototype.push，**任意**对象需要目2个条件：
+ - 对象本身要可以存取属性   // number类型是无法存取数据的
+ - 对象的length属性可读写 // function的length是只读的
+```
+var obj = {};
+Array.prototype.push.call(obj, 'first)
+alert(obj.length)  // 1
+alert(obj[0]) // first
+```
